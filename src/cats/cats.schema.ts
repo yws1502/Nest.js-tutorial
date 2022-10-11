@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { Document, SchemaOptions } from 'mongoose';
+import { Comments } from 'src/comments/comments.schema';
 
 const options: SchemaOptions = {
   timestamps: true,
@@ -58,15 +59,30 @@ export class Cat extends Document {
     name: string;
     imgUrl: string;
   };
+
+  readonly comments: Comments[];
 }
 
-export const CatSchema = SchemaFactory.createForClass(Cat);
+const _CatSchema = SchemaFactory.createForClass(Cat);
 
-CatSchema.virtual('readOnlyData').get(function (this: Cat) {
+_CatSchema.virtual('readOnlyData').get(function (this: Cat) {
   return {
     id: this.id,
     email: this.email,
     name: this.name,
     imgUrl: this.imgUrl,
+    comments: this.comments,
   };
 });
+
+_CatSchema.virtual('comments', {
+  ref: 'comments', // 해당 스키마 collection name
+  localField: '_id',
+  foreignField: 'info',
+});
+
+// populate 설정에 필요한 설정
+_CatSchema.set('toObject', { virtuals: true });
+_CatSchema.set('toJSON', { virtuals: true });
+
+export const CatSchema = _CatSchema;
