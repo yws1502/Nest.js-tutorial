@@ -12,6 +12,12 @@ interface DBQueryType {
 export class CatsRepository {
   constructor(@InjectModel(Cat.name) private readonly catModel: Model<Cat>) {}
 
+  async findCatByIdWithoutPassword(catId: string): Promise<Cat | null> {
+    // const cat = await this.catModel.findById(catId).select('email name');
+    const cat = await this.catModel.findById(catId).select('-password');
+    return cat;
+  }
+
   async findCatByEmail(email: string): Promise<Cat | null> {
     const cat = await this.catModel.findOne({ email });
     return cat;

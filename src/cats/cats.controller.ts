@@ -3,7 +3,9 @@ import {
   Controller,
   Get,
   Post,
+  Req,
   UseFilters,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { HttpExceptionFilter } from 'src/common/exceptions/http-exception.filter';
@@ -14,6 +16,10 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ReadOnlyCatDto } from './dto/cat.dto';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginRequestDto } from 'src/auth/dto/login.request.dto';
+import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
+import { Request } from 'express';
+import { CurrentUser } from 'src/common/decorators/user.decorator';
+import { Cat } from './cats.schema';
 
 @Controller('cats')
 @UseInterceptors(SuccessInterceptor)
@@ -25,11 +31,16 @@ export class CatsController {
   ) {}
 
   @ApiOperation({ summary: '현재 고양이 가져오기' })
+  @UseGuards(JwtAuthGuard)
   @Get()
   // @UseFilters(HttpExceptionFilter) // error filter의 경우 개별적인 메소드에 설정할 수 도 있다.
-  getCurrentCat() {
-    return 'current cat';
+  getCurrentCat(@CurrentUser() cat: Cat) {
+    // custom decorator
+    return cat.readOnlyData;
   }
+  // getCurrentCat(@Req() req: Request) {
+  //   return req.user;
+  // }
 
   @ApiResponse({
     status: 500,
@@ -50,12 +61,6 @@ export class CatsController {
   @Post('login')
   logIn(@Body() data: LoginRequestDto) {
     return this.authService.jwtLogIn(data);
-  }
-
-  @ApiOperation({ summary: '로그아웃' })
-  @Post('logout')
-  logOut() {
-    return 'logout';
   }
 
   @ApiOperation({ summary: '고양이 이미지 업로드' })
